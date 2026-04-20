@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reel Downloader</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#1877f2">
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background: #f0f2f5;
+        }
+      .card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            margin: 0 0 8px 0;
+            color: #1877f2;
+            font-size: 24px;
+        }
+        p { color: #65676b; margin: 0 0 20px 0; }
+        input {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        input:focus { outline: none; border-color: #1877f2; }
+        button {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            margin-top: 12px;
+            background: #1877f2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        button:disabled {
+            background: #bcc0c4;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 16px;
+            min-height: 24px;
+            font-size: 14px;
+        }
+      .success { color: #31a24c; }
+      .error { color: #e41e3f; }
+        #downloadLink {
+            display: none;
+            margin-top: 12px;
+            padding: 14px;
+            background: #31a24c;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Reel Downloader</h1>
+        <p>Paste a Facebook Reel URL to save the MP4</p>
+        <input type="text" id="urlInput" placeholder="https://www.facebook.com/reel/..." />
+        <button id="downloadBtn" onclick="startDownload()">Get Video</button>
+        <div id="status"></div>
+        <a id="downloadLink">Download MP4</a>
+    </div>
+
+    <script>
+        async function startDownload() {
+            const url = document.getElementById('urlInput').value.trim();
+            const btn = document.getElementById('downloadBtn');
+            const status = document.getElementById('status');
+            const link = document.getElementById('downloadLink');
+
+            if (!url) {
+                status.innerHTML = '<span class="error">Please enter a URL</span>';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+            status.textContent = 'Fetching video...';
+            link.style.display = 'none';
+
+            try {
+                const res = await fetch('/api/download', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url})
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    status.innerHTML = `<span class="success">Ready: ${data.title}</span>`;
+                    link.href = `/api/file/${data.file_id}`;
+                    link.style.display = 'block';
+                } else {
+                    status.innerHTML = `<span class="error">${data.error}</span>`;
+                }
+            } catch (err) {
+                status.innerHTML = '<span class="error">Network error. Try again.</span>';
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Get Video';
+        }
+    </script>
+</body>
+</html>
